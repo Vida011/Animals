@@ -5,7 +5,7 @@ const mysql = require('mysql')
 const cors = require('cors')
 app.use(cors())
 
-app.use(express.urlencoded({
+app.use(express.urlencoded({ 
     extended: true
 }))
 app.use(express.json());
@@ -14,40 +14,48 @@ const con = mysql.createConnection({
     host: 'localhost',
     user: 'root',
     password: 'mysql',
-    database: 'cow_farm'
+    database: 'animals' 
 })
 
-con.connect(err => { //jungiamės prie DB
-    if (err) {  // jeigu err
-        throw err; //sakome atia
+con.connect(err => {
+    if (err) {
+        throw err;
     }
-    console.log('Yes!'); //jeigu pasisekė, tai consolėj išsiloginam, kad 'Taip'
+    console.log('Yes!');
 })
 
 
-// app.get('/', (req, res) => { // tai basic routeris
-//   res.send('Hello World!')
-// })
 
-// app.get('/labas', (req, res) => { //rašom kelia, kuriuo nueit
-//     res.send('Labas Antanai') // ir kas nutinka, kai nueinam tuo keliu
-//   })
 
-  //parametro perdavimas:
-//   app.get('/labas/:id', (req, res) => { //rašom ko norim
-//     res.send(`Pats tu ${req.params.id}`); //ka gaunam
-//   })
-  //iraso nauja post'a
-//   INSERT INTO table_name (column1, column2, column3,...)
-// VALUES (value1, value2, value3,...) 
-app.post('/posts', (req, res) => {
-    console.log(req.body.title)
+
+
+// Iraso nauja posta
+// INSERT INTO table_name (column1, column2, column3,...)
+// VALUES (value1, value2, value3,...)
+app.post('/cow_farm', (req, res) => {  //DB pavadinimas?
+    console.log(req.body.name)
     const sql = `
-        INSERT INTO posts
-        (title, body)
-        VALUES (?, ?)
+        INSERT INTO cow_farm 
+        (name, weight, total_milk, last_milking_time)
+        VALUES (?, ?, ?, ?)
         `;
-    con.query(sql, [req.body.title, req.body.body], (err, result) => {
+    con.query(sql, [req.body.name, req.body.weight, req.body.total_milk, req.body.last_milking_time], (err, result) => {
+        if (err) {
+            throw err;
+        }
+        res.send(result);
+    })
+})
+
+// Trina posta
+// DELETE FROM table_name
+// WHERE some_column = some_value
+app.delete('/cow_farm/:id', (req, res) => {
+    const sql = `
+        DELETE FROM cow_farm
+        WHERE id = ?
+        `;
+    con.query(sql, [req.params.id], (err, result) => {
         if (err) {
             throw err;
         }
@@ -59,13 +67,13 @@ app.post('/posts', (req, res) => {
 // UPDATE table_name
 // SET column1=value, column2=value2,...
 // WHERE some_column=some_value 
-app.put('/posts/:id', (req, res) => {
+app.put('/cow_farm/:id', (req, res) => {
     const sql = `
-        UPDATE posts
-        SET title = ?, body = ?
+        UPDATE cow_farm
+        SET name = ?, weight = ?, total_milk = ?, last_milking_time = ?
         WHERE id = ?
         `;
-    con.query(sql, [req.body.title, req.body.body, req.params.id], (err, result) => {
+    con.query(sql, [req.body.name, req.body.weight, req.body.total_milk, req.body.last_milking_time, req.params.id], (err, result) => {
         if (err) {
             throw err;
         }
@@ -74,19 +82,27 @@ app.put('/posts/:id', (req, res) => {
 })
 
 
-  // rodo visus postus
-  app.get('/posts', (req, res) => {
-    con.query('SELECT * FROM posts', (err, results) => {
+// rodo visus postus
+app.get('/cow_farm', (req, res) => {
+    con.query('SELECT * FROM cow_farm ORDER BY id DESC', (err, results) => {
         if (err) {
             throw err;
         }
-        res.append('Access-Control-Allow-Origin', ['*']);
-        res.append('Access-Control-Allow-Methods', 'GET,PUT,POST,DELETE');
-        res.append('Access-Control-Allow-Headers', 'Content-Type');
+        res.json(results);
+    })
+})
+
+// skaiciuoja irasus
+// SELECT COUNT(ProductID) AS NumberOfProducts FROM Products; 
+app.get('/cow_farm/count', (req, res) => {
+    con.query('SELECT COUNT(id) as cow_farmCount FROM cow_farm', (err, results) => {
+        if (err) {
+            throw err;
+        }
         res.json(results);
     })
 })
 
 app.listen(port, () => {
-  console.log(`Example app listening at http://localhost:${port}`)
+    console.log(`Example app listening at http://localhost:${port}`)
 })
